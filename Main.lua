@@ -41,7 +41,7 @@ local KyrianRenownCompanions = {
    ["Clora"] = 17,
    ["Apolon"] = 27,
    ["Bron"] = 33,
-   ["Kosmas"] = 38,
+   ["Disciple Kosmas"] = 38,
    ["Hermestes"] = 44,
    ["Cromas the Mystic"] = 62,
    ["Auric Spiritguide"] = 71,
@@ -94,7 +94,7 @@ local KyrianTorghastCompanions = {
    ["Molako"] = 1,
    ["Hala"] = 1,
    ["Ispiron"] = 1,
-   ["ELGU-007"] = 1,
+   ["ELGU - 007"] = 1,
    ["Kiaranyka"] = 1,
 }
 local NecrolordTorghastCompanions = {
@@ -241,6 +241,12 @@ local function isNotInCompanionList(companion, t)
    return true
 end
 
+local function tablelength(T)
+   local count = 0
+   for _ in pairs(T) do count = count + 1 end
+   return count
+end
+
 local function eventHandler(self, event, ...)
     if event == "ADVENTURE_MAP_OPEN" then
     local arg1 = ...
@@ -262,6 +268,7 @@ local function eventHandler(self, event, ...)
       for name, layer in pairs(TorghastCompanions[Enum.CovenantType.None]) do
          possibleCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
       end
+      local maximumPossible = tablelength(possibleCompanions)
       -- now knock out the ones we already have
       -- fetch the follower list for SL
       local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
@@ -270,6 +277,10 @@ local function eventHandler(self, event, ...)
       end
       for companion, source in pairs(possibleCompanions) do
          addon:Print(companion .. ": " .. source)
+      end
+      local actualPossible = tablelength(possibleCompanions)
+      if actualPossible > 0 then
+         addon:Print(tostring(actualPossible) .. "/" .. tostring(maximumPossible) .. " companions")
       end
 
       -- save the list of those we've seen on all characters to our persistent table
