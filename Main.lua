@@ -1,5 +1,5 @@
-local addonName = ...
-local addon = _G[addonName]
+local addonName, addon = ...
+LibStub('AceAddon-3.0'):NewAddon(addon, addonName, 'AceConsole-3.0')
 
 local eventFrame = CreateFrame("Frame")
 
@@ -246,7 +246,7 @@ local function eventHandler(self, event, ...)
     local arg1 = ...
       local covenant = C_Covenants.GetActiveCovenantID()
       if 0 == covenant then
-         print("no covenant yet!")
+         addon:Print("no covenant yet!")
          return
       end
       local possibleCompanions = {}
@@ -268,8 +268,9 @@ local function eventHandler(self, event, ...)
       for _, companion in ipairs(companions) do
          possibleCompanions[companion.name] = nil
       end
-      print("Missing Shadowlands mission table companions and their sources:")
-      DevTools_Dump(possibleCompanions)
+      for companion, source in pairs(possibleCompanions) do
+         addon:Print(companion .. ": " .. source)
+      end
 
       -- save the list of those we've seen on all characters to our persistent table
       -- for later sanity-checking of our tables above
@@ -284,7 +285,7 @@ local function eventHandler(self, event, ...)
          if isNotInCompanionList(companion, Soulbinds) and 
             isNotInCompanionList(companion, RenownCompanions) and 
             isNotInCompanionList(companion, TorghastCompanions) then
-            print("MissingShadowlandsCompanions addon error: " .. companion .. " not in any table!")
+            addon:Print("error: " .. companion .. " not in any table!")
          end
       end
     end
