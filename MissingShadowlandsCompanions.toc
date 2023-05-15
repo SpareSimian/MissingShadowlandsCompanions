@@ -4,5 +4,6 @@
 ## Notes: Prints list of mission table companions not yet collected
 ## Author: SpareSimian
 ## IconTexture: Interface\Icons\sanctum_features_missiontable
+## SavedVariables: CovenantCompanionsToID
 
 Main.lua

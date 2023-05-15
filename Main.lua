@@ -141,6 +141,7 @@ local TorghastCompanions = {
 
 -- these are from garrFollowerID member of structures returned by GetFollowers()
 -- we use this to sanity-check the lists above
+--[[
 local CovenantCompanionsToID = {
 	["Talethi"] = 1307,
 	["Rathan"] = 1305,
@@ -221,6 +222,7 @@ local CovenantCompanionsToID = {
 	["Pelodis"] = 1271,
 	["Steadyhands"] = 1332,
 }
+--]]
 
 local function copyTable(orig)
    local copy = {}
@@ -242,7 +244,6 @@ end
 local function eventHandler(self, event, ...)
     if event == "ADVENTURE_MAP_OPEN" then
     local arg1 = ...
-      -- fetch the follower list for SL
       local covenant = C_Covenants.GetActiveCovenantID()
       if 0 == covenant then
          print("no covenant yet!")
@@ -262,6 +263,7 @@ local function eventHandler(self, event, ...)
          possibleCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
       end
       -- now knock out the ones we already have
+      -- fetch the follower list for SL
       local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
       for _, companion in ipairs(companions) do
          possibleCompanions[companion.name] = nil
@@ -269,7 +271,15 @@ local function eventHandler(self, event, ...)
       print("Missing Shadowlands mission table companions and their sources:")
       DevTools_Dump(possibleCompanions)
 
-      -- todo: save the list of those we've seen for later sanity-checking of our tables above
+      -- save the list of those we've seen on all characters to our persistent table
+      -- for later sanity-checking of our tables above
+      if not CovenantCompanionsToID then
+         CovenantCompanionsToID = {}
+      end
+      for _, companion in ipairs(companions) do
+         CovenantCompanionsToID[companion.name] = companion.garrFollowerID
+      end
+      -- now show any we're missing in our canned tables above
       for companion, garFollowerID in pairs(CovenantCompanionsToID) do
          if isNotInCompanionList(companion, Soulbinds) and 
             isNotInCompanionList(companion, RenownCompanions) and 
