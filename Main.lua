@@ -69,7 +69,7 @@ local NightFaeRenownCompanions = {
    ["Yanlar"] = 71,
 }
 local VenthyrRenownCompanions = {
-   ["Rathel"] = 4,
+   ["Rahel"] = 4,
    ["Stonehead"] = 12,
    ["Simone"] = 17,
    ["Lost Sybille"] = 27,
@@ -121,9 +121,9 @@ local VenthyrTorghastCompanions = {
    ["Kaletar"] = 2,
    ["Ayeleth"] = 3,
    ["Dug Gravewell"] = 3,
-   ["Thela"] = 1,
+   ["Thela Soulsipper"] = 1,
    ["Stonehuck"] = 1,
-   ["Nerith"] = 1,
+   ["Nerith Darkwing"] = 1,
    ["Steadyhands"] = 1,
    ["Lassik Spinebender"] = 1,
 }
