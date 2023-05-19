@@ -251,8 +251,13 @@ local function displayMissing()
    if not MissingCharacterCompanions then
       MissingCharacterCompanions = {}
    end
+   local count = 0
    for companion, source in pairs(MissingCharacterCompanions) do
       addon:Print(companion .. ": " .. source)
+      count = count + 1
+   end
+   if count > 0 then
+      addon:Print("Type /mslc to re-display the list.")
    end
 end
 
