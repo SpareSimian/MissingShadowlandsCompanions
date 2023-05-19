@@ -247,6 +247,15 @@ local function tablelength(T)
    return count
 end
 
+local function displayMissing()
+   if not MissingCharacterCompanions then
+      MissingCharacterCompanions = {}
+   end
+   for companion, source in pairs(MissingCharacterCompanions) do
+      addon:Print(companion .. ": " .. source)
+   end
+end
+
 local function eventHandler(self, event, ...)
     if event == "ADVENTURE_MAP_OPEN" then
     local arg1 = ...
@@ -255,30 +264,30 @@ local function eventHandler(self, event, ...)
          addon:Print("no covenant yet!")
          return
       end
-      local possibleCompanions = {}
+      -- build list of possible companions
+      MissingCharacterCompanions = {}
       for name, rank in pairs(Soulbinds[covenant]) do
-         possibleCompanions[name] = "(Soulbind " .. tostring(rank) .. ")"
+         MissingCharacterCompanions[name] = "(Soulbind " .. tostring(rank) .. ")"
       end
       for name, renown in pairs(RenownCompanions[covenant]) do
-         possibleCompanions[name] = "(Renown " .. tostring(renown) .. ")"
+         MissingCharacterCompanions[name] = "(Renown " .. tostring(renown) .. ")"
       end
       for name, layer in pairs(TorghastCompanions[covenant]) do
-         possibleCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
+         MissingCharacterCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
       end
       for name, layer in pairs(TorghastCompanions[Enum.CovenantType.None]) do
-         possibleCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
+         MissingCharacterCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
       end
-      local maximumPossible = tablelength(possibleCompanions)
+      local maximumPossible = tablelength(MissingCharacterCompanions)
       -- now knock out the ones we already have
       -- fetch the follower list for SL
       local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
       for _, companion in ipairs(companions) do
-         possibleCompanions[companion.name] = nil
+         MissingCharacterCompanions[companion.name] = nil
       end
-      for companion, source in pairs(possibleCompanions) do
-         addon:Print(companion .. ": " .. source)
-      end
-      local actualPossible = tablelength(possibleCompanions)
+      -- show what's left
+      displayMissing()
+      local actualPossible = tablelength(MissingCharacterCompanions)
       if actualPossible > 0 then
          addon:Print(tostring(actualPossible) .. "/" .. tostring(maximumPossible) .. " companions")
       end
@@ -304,3 +313,8 @@ end
 
 eventFrame:SetScript("OnEvent", eventHandler)
 eventFrame:RegisterEvent("ADVENTURE_MAP_OPEN")
+
+SLASH_MSLC1="/mslc"
+SlashCmdList["MSLC"] = function(msg)
+   displayMissing()
+end
