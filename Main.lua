@@ -293,7 +293,7 @@ local function OnGarrisonFollowerAdded(
    followerDbID, followerName, followerClassName, followerLevel,
    followerQuality, isUpgraded, textureKit, followerTypeID)
    if Enum.GarrisonFollowerType.FollowerType_9_0  == followerTypeID then
-      addon:Print("New follower " .. companion .. " found!")
+      addon:Print("New follower " .. followerName .. " found!")
       findMissing()
    end
 end
@@ -320,6 +320,7 @@ end
 function addon:OnInitialize()
    if not initialize() then
       addon:Print("initialize returned false!")
+      addon:Print(tostring(C_Covenants.GetActiveCovenantID()) .. " " .. tablelength(C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)))
       -- alts with no covenant or table don't need this
       return
    end
