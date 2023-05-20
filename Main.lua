@@ -194,7 +194,9 @@ end
 local function initialize()
    -- if no covenant or no followers, skip further processing
    if 0 == C_Covenants.GetActiveCovenantID() then return false end
-   if 0 == tablelength(C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)) then return false end
+   local followers = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
+   if not followers then return false end
+   if 0 == tablelength(followers) then return false end
 
    -- init all our data structures
    if not playerNameKey then
@@ -215,6 +217,15 @@ local function initialize()
    end
    if not minimapButtonCreated then createMinimapButton() end
    return true -- success
+end
+
+local function logInitializeFailure()
+   addon:Print("initialize returned false!")
+   local followers = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
+   addon:Print("covenant " .. tostring(C_Covenants.GetActiveCovenantID()))
+   if followers then
+      addon:Print("follower count " .. tostring(tablelength(followers)))
+   end
 end
 
 local function addMissing(companionName, source)
@@ -238,12 +249,9 @@ end
 mslcDisplayMissing = displayMissing
 
 local function findMissing()
-   local covenant = C_Covenants.GetActiveCovenantID()
-   if 0 == covenant then
-      addon:Print("no covenant yet!")
-      return
-   end
+   if not initialize() then return end
    -- build list of possible companions
+   local covenant = C_Covenants.GetActiveCovenantID()
    local missing = {}
    for name, rank in pairs(Soulbinds[covenant]) do
       missing[name] = "(Soulbind " .. tostring(rank) .. ")"
@@ -317,10 +325,9 @@ SlashCmdList["MSLC"] = function(msg)
    displayMissing()
 end
 
-function addon:OnInitialize()
+function addon:OnEnable()
    if not initialize() then
-      addon:Print("initialize returned false!")
-      addon:Print(tostring(C_Covenants.GetActiveCovenantID()) .. " " .. tablelength(C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)))
+      logInitializeFailure()
       -- alts with no covenant or table don't need this
       return
    end
