@@ -1,14 +1,16 @@
 ## Interface: 100100
 ## Title: Missing Shadowlands Companions
-## Version: 10.1-002
+## Version: 10.1-003
 ## Notes: Prints list of mission table companions not yet collected
 ## Author: SpareSimian
 ## IconTexture: Interface\Icons\sanctum_features_missiontable
-## SavedVariables: CovenantCompanionsToID
-## SavedVariablesPerCharacter: CovenantCompanionsToID, MissingCharacterCompanions
+## SavedVariables: mslcDB
+## SavedVariablesPerCharacter: mslcDBPerCharacter
 
 libs\LibStub\LibStub.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml
 libs\AceConsole-3.0\AceConsole-3.0.xml
+libs\LibDBIcon-1.0\embeds.xml
+libs\LibDBIcon-1.0\libDBIcon-1.0\libDBIcon-1.0.lua
 
 Main.lua

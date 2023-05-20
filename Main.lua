@@ -1,11 +1,12 @@
 local addonName, addon = ...
 LibStub('AceAddon-3.0'):NewAddon(addon, addonName, 'AceConsole-3.0')
 
-local eventFrame = CreateFrame("Frame")
+-- TODO:
+-- Watch for "GARRISON_FOLLOWER_ADDED" event to remove elements from missing list as they're acquired. (now testing)
 
--- Data from https://docs.google.com/spreadsheets/d/16etPtUTrVxiNl50iNHvi-Sqs6-goOPOjf2kVp8hZeJM/edit#gid=0
-
+-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 -- sources
+-- Data from https://docs.google.com/spreadsheets/d/16etPtUTrVxiNl50iNHvi-Sqs6-goOPOjf2kVp8hZeJM/edit#gid=0
 
 local KyrianSoulbinds = { 
    ["Pelagos"] = 1,
@@ -139,90 +140,8 @@ local TorghastCompanions = {
    [Enum.CovenantType.Necrolord] = NecrolordTorghastCompanions,
 }
 
--- these are from garrFollowerID member of structures returned by GetFollowers()
--- we use this to sanity-check the lists above
---[[
-local CovenantCompanionsToID = {
-	["Talethi"] = 1307,
-	["Rathan"] = 1305,
-	["Kaletar"] = 1217,
-	["Teliah"] = 1221,
-	["Bogdan"] = 1253,
-	["Hermestes"] = 1341,
-	["Blisswing"] = 1277,
-	["Dug Gravewell"] = 1214,
-	["Nadjia the Mistblade"] = 1208,
-	["Nerith Darkwing"] = 1215,
-	["Emeni"] = 1263,
-	["Qadarin"] = 1286,
-	["Elwyn"] = 1338,
-	["Rattlebag"] = 1310,
-	["Sika"] = 1272,
-	["Kleia"] = 1260,
-	["Spore of Marasmius"] = 1326,
-	["Vulca"] = 1255,
-	["Lloth'wellyn"] = 1281,
-	["Lassik Spinebender"] = 1333,
-	["Plague Deviser Marileth"] = 1261,
-	["Thela Soulsipper"] = 1213,
-	["General Draven"] = 1209,
-	["Deathfang"] = 1336,
-	["Chachi the Artiste"] = 1345,
-	["Simone"] = 1252,
-	["Enceladus"] = 1335,
-	["Yanlar"] = 1339,
-	["Rencissa the Dynamo"] = 1302,
-	["Stonehead"] = 1251,
-	["Lost Sybille"] = 1254,
-	["Hunt-Captain Korayn"] = 1266,
-	["Khaliiq"] = 1303,
-	["Kythekios"] = 1222,
-	["Stonehuck"] = 1216,
-	["Theotar"] = 1210,
-	["Duskleaf"] = 1278,
-	["Hala"] = 1267,
-	["Madame Iza"] = 1346,
-	["Lucia"] = 1347,
-	["Secutor Mevix"] = 1300,
-	["Croman"] = 1325,
-	["Cromas the Mystic"] = 1342,
-	["Kiaranyka"] = 1329,
-	["Niya"] = 1265,
-	["ELGU - 007"] = 1328,
-	["Dreamweaver"] = 1264,
-	["Meatball"] = 1257,
-	["Sulanoom"] = 1337,
-	["Molako"] = 1268,
-	["Master Sha'lor"] = 1284,
-	["Apolon"] = 1276,
-	["Auric Spiritguide"] = 1343,
-	["Rahel"] = 1250,
-	["Watcher Vesperbloom"] = 1287,
-	["Ella"] = 1327,
-	["Bron"] = 1275,
-	["Velkein"] = 1308,
-	["Bonesmith Heirmir"] = 1262,
-	["Lyra Hailstorm"] = 1334,
-	["Disciple Kosmas"] = 1274,
-	["Assembler Xertora"] = 1309,
-	["Plaguey"] = 1304,
-	["Te'zan"] = 1285,
-	["Pelagos"] = 1259,
-	["Clora"] = 1273,
-	["Karynmwylyann"] = 1279,
-	["Gorgelimb"] = 1306,
-	["Guardian Kota"] = 1283,
-	["Telethakas"] = 1223,
-	["Gunn Gorgebone"] = 1301,
-	["Yira'lya"] = 1282,
-	["Ayeleth"] = 1220,
-	["Ispiron"] = 1269,
-	["Chalkyth"] = 1280,
-	["Groonoomcrooek"] = 1288,
-	["Pelodis"] = 1271,
-	["Steadyhands"] = 1332,
-}
---]]
+-- end of follower source data
+-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 local function copyTable(orig)
    local copy = {}
@@ -247,12 +166,66 @@ local function tablelength(T)
    return count
 end
 
-local function displayMissing()
-   if not MissingCharacterCompanions then
-      MissingCharacterCompanions = {}
+local playerNameKey -- "name - realm" used as key in persistent data
+local missingKey = "missing"
+local minimapButtonCreated = false
+
+local function createMinimapButton()
+   local prettyName = "Missing Shadowlands Companions"
+   local miniButton = LibStub("LibDataBroker-1.1"):NewDataObject(addonName, {
+      type = "data source",
+      text = prettyName,
+      icon = "Interface\\Icons\\sanctum_features_missiontable",
+      OnClick = function(self, btn)
+         mslcDisplayMissing()
+      end,
+      OnTooltipShow = function(tooltip)
+         if not tooltip or not tooltip.AddLine then return end
+         tooltip:AddLine(prettyName)
+      end,
+   })
+   local icon = LibStub("LibDBIcon-1.0", true)
+   icon:Register(addonName, miniButton, mslcDB)
+   minimapButtonCreated = true
+end
+
+-- initialize can be called at any event, in case player gained her first follower
+
+local function initialize()
+   -- if no covenant or no followers, skip further processing
+   if 0 == C_Covenants.GetActiveCovenantID() then return false end
+   if 0 == tablelength(C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)) then return false end
+
+   -- init all our data structures
+   if not playerNameKey then
+      local name, realm = UnitFullName("player")
+      playerNameKey = name .. " - " .. realm
    end
+   if not mslcDB then
+      mslcDB = {}
+   end
+   if not mslcDB[playerNameKey] then
+      mslcDB[playerNameKey] = {}
+   end
+   if not mslcDB[playerNameKey][missingKey] then
+      mslcDB[playerNameKey][missingKey] = {}
+   end
+   if not mslcDB["CovenantCompanionsToID"] then
+      mslcDB["CovenantCompanionsToID"] = {}
+   end
+   if not minimapButtonCreated then createMinimapButton() end
+   return true -- success
+end
+
+local function addMissing(companionName, source)
+   if not initialize() then return end
+   mslcDB[playerNameKey][missingKey][companionName] = source
+end
+
+local function displayMissing()
+   if not initialize() then return end
    local count = 0
-   for companion, source in pairs(MissingCharacterCompanions) do
+   for companion, source in pairs(mslcDB[playerNameKey][missingKey]) do
       addon:Print(companion .. ": " .. source)
       count = count + 1
    end
@@ -261,65 +234,96 @@ local function displayMissing()
    end
 end
 
-local function eventHandler(self, event, ...)
-    if event == "ADVENTURE_MAP_OPEN" then
-    local arg1 = ...
-      local covenant = C_Covenants.GetActiveCovenantID()
-      if 0 == covenant then
-         addon:Print("no covenant yet!")
-         return
-      end
-      -- build list of possible companions
-      MissingCharacterCompanions = {}
-      for name, rank in pairs(Soulbinds[covenant]) do
-         MissingCharacterCompanions[name] = "(Soulbind " .. tostring(rank) .. ")"
-      end
-      for name, renown in pairs(RenownCompanions[covenant]) do
-         MissingCharacterCompanions[name] = "(Renown " .. tostring(renown) .. ")"
-      end
-      for name, layer in pairs(TorghastCompanions[covenant]) do
-         MissingCharacterCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
-      end
-      for name, layer in pairs(TorghastCompanions[Enum.CovenantType.None]) do
-         MissingCharacterCompanions[name] = "(Torghast layer " .. tostring(layer) .. "+)"
-      end
-      local maximumPossible = tablelength(MissingCharacterCompanions)
-      -- now knock out the ones we already have
-      -- fetch the follower list for SL
-      local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
-      for _, companion in ipairs(companions) do
-         MissingCharacterCompanions[companion.name] = nil
-      end
-      -- show what's left
-      displayMissing()
-      local actualPossible = tablelength(MissingCharacterCompanions)
-      if actualPossible > 0 then
-         addon:Print(tostring(actualPossible) .. "/" .. tostring(maximumPossible) .. " companions")
-      end
+-- hack to let minimap button reference this
+mslcDisplayMissing = displayMissing
 
-      -- save the list of those we've seen on all characters to our persistent table
-      -- for later sanity-checking of our tables above
-      if not CovenantCompanionsToID then
-         CovenantCompanionsToID = {}
+local function findMissing()
+   local covenant = C_Covenants.GetActiveCovenantID()
+   if 0 == covenant then
+      addon:Print("no covenant yet!")
+      return
+   end
+   -- build list of possible companions
+   local missing = {}
+   for name, rank in pairs(Soulbinds[covenant]) do
+      missing[name] = "(Soulbind " .. tostring(rank) .. ")"
+   end
+   for name, renown in pairs(RenownCompanions[covenant]) do
+      missing[name] = "(Renown " .. tostring(renown) .. ")"
+   end
+   for name, layer in pairs(TorghastCompanions[covenant]) do
+      missing[name] = "(Torghast layer " .. tostring(layer) .. "+)"
+   end
+   for name, layer in pairs(TorghastCompanions[Enum.CovenantType.None]) do
+      missing[name] = "(Torghast layer " .. tostring(layer) .. "+)"
+   end
+   local maximumPossible = tablelength(missing)
+   -- now knock out the ones we already have
+   -- fetch the follower list for SL
+   local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
+   for _, companion in ipairs(companions) do
+      missing[companion.name] = nil
+   end
+   -- stash it in the persistent data
+   mslcDB[playerNameKey][missingKey] = missing
+   -- show what's left
+   displayMissing()
+   local actualPossible = tablelength(missing)
+   if actualPossible > 0 then
+      addon:Print(tostring(actualPossible) .. "/" .. tostring(maximumPossible) .. " companions")
+   end
+
+   -- save the list of those we've seen on all characters to our persistent table
+   -- for later sanity-checking of our tables above
+   for _, companion in ipairs(companions) do
+      mslcDB["CovenantCompanionsToID"][companion.name] = companion.garrFollowerID
+   end
+   -- now show any we're missing in our canned tables above
+   for companion, garFollowerID in pairs(mslcDB["CovenantCompanionsToID"]) do
+      if isNotInCompanionList(companion, Soulbinds) and 
+         isNotInCompanionList(companion, RenownCompanions) and 
+         isNotInCompanionList(companion, TorghastCompanions) then
+         addon:Print("error: " .. companion .. " not in any table!")
       end
-      for _, companion in ipairs(companions) do
-         CovenantCompanionsToID[companion.name] = companion.garrFollowerID
-      end
-      -- now show any we're missing in our canned tables above
-      for companion, garFollowerID in pairs(CovenantCompanionsToID) do
-         if isNotInCompanionList(companion, Soulbinds) and 
-            isNotInCompanionList(companion, RenownCompanions) and 
-            isNotInCompanionList(companion, TorghastCompanions) then
-            addon:Print("error: " .. companion .. " not in any table!")
-         end
-      end
+   end
+end
+
+-- see https://wowpedia.fandom.com/wiki/GARRISON_FOLLOWER_ADDED
+local function OnGarrisonFollowerAdded(
+   followerDbID, followerName, followerClassName, followerLevel,
+   followerQuality, isUpgraded, textureKit, followerTypeID)
+   if Enum.GarrisonFollowerType.FollowerType_9_0  == followerTypeID then
+      addon:Print("New follower " .. companion .. " found!")
+      findMissing()
+   end
+end
+
+local function eventHandler(self, event, ...)
+    if "ADVENTURE_MAP_OPEN" == event then
+      findMissing()
+    end
+    if "GARRISON_FOLLOWER_ADDED" == event then
+      OnGarrisonFollowerAdded(unpack(arg))
     end
 end
 
+local eventFrame = CreateFrame("Frame")
 eventFrame:SetScript("OnEvent", eventHandler)
 eventFrame:RegisterEvent("ADVENTURE_MAP_OPEN")
+eventFrame:RegisterEvent("GARRISON_FOLLOWER_ADDED")
 
 SLASH_MSLC1="/mslc"
 SlashCmdList["MSLC"] = function(msg)
    displayMissing()
+end
+
+function addon:OnInitialize()
+   if not initialize() then
+      addon:Print("initialize returned false!")
+      -- alts with no covenant or table don't need this
+      return
+   end
+   local version = C_AddOns.GetAddOnMetadata(addonName, "Version") -- from TOC file
+   addon:Print("Version " .. version)
+   findMissing()
 end
