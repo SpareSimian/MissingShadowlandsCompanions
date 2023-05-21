@@ -60,8 +60,8 @@ local NecrolordRenownCompanions = {
 }
 local NightFaeRenownCompanions = {
    ["Guardian Kota"] = 4,
-   ["Te'Zan"] = 12,
-   ["Master Sha'Lor"] = 17,
+   ["Te'zan"] = 12,
+   ["Master Sha'lor"] = 17,
    ["Qadarin"] = 27,
    ["Watcher Vesperbloom"] = 33,
    ["Groonoomcrooek"] = 38,
@@ -116,7 +116,7 @@ local NightFaeTorghastCompanions = {
    ["Lloth'wellyn"] = 1,
    ["Duskleaf"] = 1,
    ["Ella"] = 1,
-   ["Spore of Mirasmius"] = 1,
+   ["Spore of Marasmius"] = 1,
 }
 local VenthyrTorghastCompanions = {
    ["Kaletar"] = 2,
