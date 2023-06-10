@@ -6,6 +6,7 @@
 ## IconTexture: Interface\Icons\sanctum_features_missiontable
 ## SavedVariables: mslcDB
 ## SavedVariablesPerCharacter: mslcDBPerCharacter
+## AddonCompartmentFunc: mslc_OnAddonCompartmentClick
 
 libs\LibStub\LibStub.lua
 libs\AceAddon-3.0\AceAddon-3.0.xml

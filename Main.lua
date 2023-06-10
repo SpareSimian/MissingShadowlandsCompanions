@@ -335,3 +335,7 @@ function addon:OnEnable()
    addon:Print("Version " .. version)
    findMissing()
 end
+
+function mslc_OnAddonCompartmentClick(addonName, mouseButton, button)
+   findMissing()
+end
