@@ -311,7 +311,10 @@ local function eventHandler(self, event, ...)
       findMissing()
     end
     if "GARRISON_FOLLOWER_ADDED" == event then
-      OnGarrisonFollowerAdded(unpack(arg))
+      -- this event also fires when collecting red shirts at the BFA table, but no arg is present
+      if arg then
+         OnGarrisonFollowerAdded(unpack(arg))
+      end
     end
 end
 
