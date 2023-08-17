@@ -103,9 +103,9 @@ local NecrolordTorghastCompanions = {
    ["Talethi"] = 3,
    ["Velkein"] = 3,
    ["Ashraka"] = 1,
-   ["Xertora"] = 1,
+   ["Assembler Xertora"] = 1,
    ["Rattlebag"] = 1,
-   ["Riyuja Shockfist"] = 1,
+   ["Ryuja Shockfist"] = 1,
    ["Kinessa the Absorbent"] = 1,
 }
 local NightFaeTorghastCompanions = {
