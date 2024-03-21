@@ -11,7 +11,7 @@ LibStub('AceAddon-3.0'):NewAddon(addon, addonName, 'AceConsole-3.0')
 local KyrianSoulbinds = { 
    ["Pelagos"] = 1,
    ["Kleia"] = 2,
-   ["Mikaniikos"] = 3,
+   ["Mikanikos"] = 3,
 }
 local NecrolordSoulbinds = { 
    ["Plague Deviser Marileth"] = 1,
