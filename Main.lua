@@ -1,9 +1,6 @@
 local addonName, addon = ...
 LibStub('AceAddon-3.0'):NewAddon(addon, addonName, 'AceConsole-3.0')
 
--- TODO:
--- Watch for "GARRISON_FOLLOWER_ADDED" event to remove elements from missing list as they're acquired. (now testing)
-
 -- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 -- sources
 -- Data from https://docs.google.com/spreadsheets/d/16etPtUTrVxiNl50iNHvi-Sqs6-goOPOjf2kVp8hZeJM/edit#gid=0
@@ -143,12 +140,20 @@ local TorghastCompanions = {
 -- end of follower source data
 -- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-local function copyTable(orig)
-   local copy = {}
-   for orig_key, orig_value in pairs(orig) do
-      copy[orig_key] = orig_value
-   end
-   return copy
+-- deepcopy from http://lua-users.org/wiki/CopyTable
+function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
 end
 
 local function isNotInCompanionList(companion, t)
@@ -168,6 +173,7 @@ end
 
 local playerNameKey -- "name - realm" used as key in persistent data
 local missingKey = "missing"
+local haveKey = "have"
 local minimapButtonCreated = false
 
 local function createMinimapButton()
@@ -269,6 +275,7 @@ local function findMissing()
    -- now knock out the ones we already have
    -- fetch the follower list for SL
    local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
+   mslcDB[playerNameKey][haveKey] = deepcopy(companions)
    for _, companion in ipairs(companions) do
       missing[companion.name] = nil
    end
