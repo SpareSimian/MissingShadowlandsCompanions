@@ -349,3 +349,48 @@ end
 function mslc_OnAddonCompartmentClick(addonName, mouseButton, button)
    findMissing()
 end
+
+function colorNumberByXPRange(xpToGo)
+   if xpToGo < 3000 then
+      return ITEM_QUALITY_COLORS[2].hex .. xpToGo .. "|r"
+   elseif xpToGo < 7500 then
+      return ITEM_QUALITY_COLORS[3].hex .. xpToGo .. "|r"
+   elseif xpToGo < 10000 then
+      return ITEM_QUALITY_COLORS[4].hex .. xpToGo .. "|r"
+   end
+   return ITEM_QUALITY_COLORS[5].hex .. xpToGo .. "|r"
+end
+
+-- /lslc command: Leveling ShadowLands Companions
+-- display companions on all characters that can benefit from BOA XP items
+
+SLASH_LSLC1="/lslc"
+SlashCmdList["LSLC"] = function(msg)
+   local leveling = {} -- start the list
+   local count = 0
+   for char, data in pairs(mslcDB) do
+      if (type(data) == "table") and data.have then
+         for _, follower in pairs(data.have) do
+            if not follower.isMaxLevel then
+               -- add to list
+               if not leveling[char] then
+                  leveling[char] = {}
+               end
+               leveling[char][follower.name] = follower
+               count = count + 1
+            end
+         end
+      end
+   end
+   -- now print the list
+   addon:Print(count .. " leveling followers")
+   if count > 0 then
+      for char, followers in pairs(leveling) do
+         addon:Print("  " .. char)
+         for follower, data in pairs(followers) do
+            local xpToGo = data.levelXP - data.xp
+            addon:Print("    " .. follower .. ": " .. data.level .. " " .. colorNumberByXPRange(xpToGo))
+         end
+      end
+   end
+end
