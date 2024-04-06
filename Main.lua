@@ -357,8 +357,34 @@ function colorNumberByXPRange(xpToGo)
       return ITEM_QUALITY_COLORS[3].hex .. xpToGo .. "|r"
    elseif xpToGo < 10000 then
       return ITEM_QUALITY_COLORS[4].hex .. xpToGo .. "|r"
+   elseif xpToGo < 10500 then
+      return ITEM_QUALITY_COLORS[5].hex .. xpToGo .. "|r"
    end
    return ITEM_QUALITY_COLORS[5].hex .. xpToGo .. "|r"
+end
+
+-- https://stackoverflow.com/questions/15706270/sort-a-table-in-lua
+function spairs(t, order)
+    -- collect the keys
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys 
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
 end
 
 -- /lslc command: Leveling ShadowLands Companions
@@ -366,11 +392,15 @@ end
 
 SLASH_LSLC1="/lslc"
 SlashCmdList["LSLC"] = function(msg)
+   if not initialize() then return end -- in case this toon has never been to the mission table
+   -- first update our own data
+   local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
+   mslcDB[playerNameKey][haveKey] = deepcopy(companions)
    local leveling = {} -- start the list
    local count = 0
    for char, data in pairs(mslcDB) do
       if (type(data) == "table") and data.have then
-         for _, follower in pairs(data.have) do
+         for _, follower in spairs(data.have, function(t, l, r) return t[l].level < t[r].level end) do
             if not follower.isMaxLevel then
                -- add to list
                if not leveling[char] then
@@ -389,7 +419,10 @@ SlashCmdList["LSLC"] = function(msg)
          addon:Print("  " .. char)
          for follower, data in pairs(followers) do
             local xpToGo = data.levelXP - data.xp
-            addon:Print("    " .. follower .. ": " .. data.level .. " " .. colorNumberByXPRange(xpToGo))
+            -- only report the ones within range of the biggest BoP item
+            if xpToGo <= 10500 then
+               addon:Print("    " .. follower .. ": " .. data.level .. " " .. colorNumberByXPRange(xpToGo))
+            end
          end
       end
    end
