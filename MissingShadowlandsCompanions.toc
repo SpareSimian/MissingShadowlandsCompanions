@@ -1,6 +1,6 @@
-## Interface: 100100
+## Interface: 100207
 ## Title: Missing Shadowlands Companions
-## Version: 10.2.6-3
+## Version: 10.2.7-0
 ## Notes: Prints list of mission table companions not yet collected
 ## Author: SpareSimian
 ## IconTexture: Interface\Icons\sanctum_features_missiontable
