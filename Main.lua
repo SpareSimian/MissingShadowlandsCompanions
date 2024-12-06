@@ -427,3 +427,22 @@ SlashCmdList["LSLC"] = function(msg)
       end
    end
 end
+
+-- /cslc command: Count missing ShadowLands Companions for all characters
+-- display number of companions on all characters
+
+SLASH_CSLC1="/cslc"
+SlashCmdList["CSLC"] = function(msg)
+   if not initialize() then return end -- in case this toon has never been to the mission table
+   for char, data in pairs(mslcDB) do
+      if (type(data) == "table") and data[missingKey] then
+         local missing = data[missingKey]
+         if missing and (type(missing) == "table") then
+            local count = tablelength(missing)
+            if count and (count > 0) then
+               addon:Print(tostring(count) .. " " .. char)
+            end
+         end
+      end
+   end
+end
