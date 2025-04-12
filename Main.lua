@@ -32,9 +32,11 @@ local Soulbinds = {
    [Enum.CovenantType.Necrolord] = NecrolordSoulbinds,
 }
 
+local KyrianPelodisNemea = "Pelodis/Nemea" -- this one is special, you choose which one in quest "Pride or Unit"
+
 -- for Renown, value is renown level at which companion is acquired
 local KyrianRenownCompanions = {
-   ["Pelodis"] = 4,
+   [KyrianPelodisNemea] = 4,
    ["Sika"] = 12,
    ["Clora"] = 17,
    ["Apolon"] = 27,
@@ -277,7 +279,12 @@ local function findMissing()
    local companions = C_Garrison.GetFollowers(Enum.GarrisonFollowerType.FollowerType_9_0_GarrisonFollower)
    mslcDB[playerNameKey][haveKey] = deepcopy(companions)
    for _, companion in ipairs(companions) do
-      missing[companion.name] = nil
+      local name = companion.name
+      -- these two share a slot
+      if "Pelodis" == name then name = KyrianPelodisNemea
+      elseif "Nemea" == name then name = KyrianPelodisNemea
+      end
+      missing[name] = nil
    end
    -- stash it in the persistent data
    mslcDB[playerNameKey][missingKey] = missing
@@ -297,7 +304,10 @@ local function findMissing()
    for companion, garFollowerID in pairs(mslcDB["CovenantCompanionsToID"]) do
       if isNotInCompanionList(companion, Soulbinds) and 
          isNotInCompanionList(companion, RenownCompanions) and 
-         isNotInCompanionList(companion, TorghastCompanions) then
+         isNotInCompanionList(companion, TorghastCompanions) and
+         -- next two share a slot
+         "Nemea" ~= companion and
+         "Pelodis" ~= companion then
          addon:Print("error: " .. companion .. " not in any table!")
       end
    end
